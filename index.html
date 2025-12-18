@@ -131,6 +131,18 @@ a:hover {
 </div>
 
 <script>
+/* ===== NORMALIZZAZIONE TESTO (FIX CERCA) ===== */
+function normalizza(testo) {
+  return testo
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/–/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* ===== DATI ===== */
 const dati = [
   { tipo:"titolo-nc", nome:"Mappa del Campus", link:"generale.jpg" },
 
@@ -191,70 +203,52 @@ const search = document.getElementById("search");
 const viewer = document.getElementById("viewer");
 const viewerImg = document.getElementById("viewer-img");
 
-let sezioni = [];
-
+/* ===== RENDER ===== */
 function render(filtro = "") {
   lista.innerHTML = "";
-  sezioni = [];
+  const testo = normalizza(filtro);
 
-  const testo = filtro.toLowerCase();
-
-  // 1. Mappa del Campus (sempre visibile)
+  // Campus sempre visibile
   const campus = document.createElement("li");
   campus.textContent = "Mappa del Campus";
   campus.className = "titolo-nc";
   campus.onclick = () => apri("generale.jpg");
   lista.appendChild(campus);
 
-  // 2. Costruiamo una struttura per palazzina
   let sezioneCorrente = null;
-  const sezioniDati = {};
+  const sezioni = {};
 
   dati.forEach(d => {
     if (d.tipo === "titolo") {
       sezioneCorrente = d.nome;
-      sezioniDati[sezioneCorrente] = [];
+      sezioni[sezioneCorrente] = [];
     } else if (!d.tipo && sezioneCorrente) {
-      sezioniDati[sezioneCorrente].push(d);
+      sezioni[sezioneCorrente].push(d);
     }
   });
 
-  // 3. Render delle palazzine
-  Object.entries(sezioniDati).forEach(([nomeSezione, aule]) => {
-
-    // filtro sulle aule
-    const auleFiltrate = testo
-      ? aule.filter(a => a.nome.toLowerCase().includes(testo))
+  Object.entries(sezioni).forEach(([nome, aule]) => {
+    const filtrate = testo
+      ? aule.filter(a => normalizza(a.nome).includes(testo))
       : aule;
 
-    if (auleFiltrate.length === 0) return;
+    if (filtrate.length === 0) return;
 
     const liTitolo = document.createElement("li");
-    liTitolo.textContent = nomeSezione;
-    liTitolo.className = "titolo";
+    liTitolo.textContent = nome;
+    liTitolo.className = testo ? "titolo" : "titolo chiuso";
 
     const ul = document.createElement("ul");
-
-    // se sto cercando → apro automaticamente
-    if (testo) {
-      liTitolo.classList.remove("chiuso");
-    } else {
-      liTitolo.classList.add("chiuso");
-      ul.classList.add("nascosto");
-    }
+    if (!testo) ul.classList.add("nascosto");
 
     liTitolo.onclick = () => {
-      document.querySelectorAll(".titolo").forEach(t => {
-        if (t !== liTitolo) t.classList.add("chiuso");
-      });
-      document.querySelectorAll("ul").forEach(u => {
-        if (u !== ul) u.classList.add("nascosto");
-      });
+      document.querySelectorAll(".titolo").forEach(t => t.classList.add("chiuso"));
+      document.querySelectorAll("ul").forEach(u => u.classList.add("nascosto"));
       liTitolo.classList.toggle("chiuso");
       ul.classList.toggle("nascosto");
     };
 
-    auleFiltrate.forEach(a => {
+    filtrate.forEach(a => {
       const li = document.createElement("li");
       const link = document.createElement("a");
       link.textContent = a.nome;
@@ -267,7 +261,6 @@ function render(filtro = "") {
     lista.appendChild(ul);
   });
 }
-
 
 function apri(src) {
   viewerImg.src = src;
