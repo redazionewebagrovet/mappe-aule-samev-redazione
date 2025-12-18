@@ -1,23 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mappe aule SAMEV</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 16px auto;
+  max-width: 600px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.logo {
+  height: 140px;
+}
+
+h1 {
+  margin: 0;
+}
+
+/* SEARCH */
+input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1em;
+  margin-bottom: 18px;
+}
+
+/* LISTA */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  padding: 10px 0;
+}
+
+a {
+  color: #0066cc;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* TITOLI */
+.titolo {
+  font-weight: bold;
+  color: #000;
+  font-size: 1.15em;
+  padding-top: 22px;
+  cursor: pointer;
+}
+
+.titolo::after {
+  content: " ▾";
+}
+
+.titolo.chiuso::after {
+  content: " ▸";
+}
+
+.titolo-nc {
+  font-weight: bold;
+  color: #000;
+  font-size: 1.2em;
+  padding-top: 22px;
+  cursor: pointer;
+}
+
+.nascosto {
+  display: none;
+}
+
+/* VIEWER */
+.viewer {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.viewer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.viewer::after {
+  content: "✕";
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <img src="logo-samev-trasparente.png" class="logo">
+  <h1>Mappe delle aule</h1>
+</div>
+
+<input id="search" placeholder="Cerca aula (es. Romisondo)">
+
+<ul id="lista"></ul>
+
+<div class="viewer" id="viewer">
+  <img id="viewer-img">
+</div>
+
+<script>
+/* ===== NORMALIZZAZIONE TESTO ===== */
+function normalizza(testo) {
+  return testo
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/–/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* ===== DATI ===== */
+const dati = [
+  { tipo:"titolo-nc", nome:"Mappa del Campus", link:"generale.jpg" },
+
+  { tipo:"titolo", nome:"AULE – PALAZZINA DISAFA" },
+  { nome:"Aula Informatica", link:"palazzina-DISAFA-PT.jpg" },
+  { nome:"Laboratorio Analisi Sensoriali", link:"palazzina-DISAFA-PT.jpg" },
+  { nome:"Laboratorio Entomologia", link:"palazzina-DISAFA-PT.jpg" },
+  { nome:"Laboratorio Patologia – Microbiologia", link:"palazzina-DISAFA-PT.jpg" },
+  { nome:"Aula Romisondo", link:"palazzina-DISAFA-P1.jpg" },
+  { nome:"Aula Zootecnica", link:"palazzina-DISAFA-P1.jpg" },
+  { nome:"Laboratorio Chimica", link:"palazzina-DISAFA-P1.jpg" },
+  { nome:"Aula SAMEV 9", link:"zona-mensa.jpg" },
+  { nome:"Aula SAMEV 10", link:"zona-mensa.jpg" },
+  { nome:"Aula SAMEV 11", link:"zona-mensa.jpg" },
+  { nome:"Aula SAMEV 12", link:"zona-mensa.jpg" },
+  { nome:"Laboratorio Analisi Territoriale (GIS)", link:"zona-mensa.jpg" },
+
+  { tipo:"titolo", nome:"AULE – PALAZZINA SAMEV" },
+  { nome:"Aula Magna A", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula Magna B", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula A", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula B", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula SAMEV 1", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula SAMEV 2", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula SAMEV 3", link:"palazzina-SAMEV-PT.jpg" },
+  { nome:"Aula C", link:"palazzina-SAMEV-P1.jpg" },
+  { nome:"Aula D", link:"palazzina-SAMEV-P1.jpg" },
+  { nome:"Aula S5", link:"palazzina-SAMEV-P1.jpg" },
+  { nome:"Aula S6", link:"palazzina-SAMEV-P1.jpg" },
+  { nome:"Aula SAMEV 5", link:"palazzina-SAMEV-P1.jpg" },
+
+  { tipo:"titolo", nome:"AULE – PALAZZINA DSV" },
+  { nome:"Aula Ghisleni", link:"Palazzina-DSV-PT-SX.jpg" },
+  { nome:"Sala Settoria Anatomia Patologica", link:"Palazzina-DSV-PT-SX.jpg" },
+  { nome:"Aula Ospedale 1", link:"Palazzina-DSV-PT-SX.jpg" },
+  { nome:"Aula Godina", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"Sala Settoria Anatomia Normale", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"Macello didattico", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"Laboratorio biologico", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"CD1", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"CD2", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"CD3", link:"Palazzina-DSV-PT-DX.jpg" },
+  { nome:"Aula Monti", link:"Palazzina-DSV-P1-SX.jpg" },
+  { nome:"Aula Micheletto", link:"Palazzina-DSV-P1-SX.jpg" },
+  { nome:"Sala Riunioni", link:"Palazzina-DSV-P1-SX.jpg" },
+  { nome:"CD4", link:"Palazzina-DSV-P1-SX.jpg" },
+  { nome:"Sala Osteologia", link:"Palazzina-DSV-P1-DX.jpg" },
+  { nome:"Aula Informatica Piccola", link:"Palazzina-DSV-P1-DX.jpg" },
+  { nome:"Aula Informatica Grande", link:"Palazzina-DSV-P1-DX.jpg" },
+  { nome:"Aula Microscopi Singoli", link:"Palazzina-DSV-P1-DX.jpg" },
+  { nome:"Aula Microscopi Multipli", link:"Palazzina-DSV-P1-DX.jpg" },
+  { nome:"Laboratorio Chimico-Biochimico", link:"Palazzina-DSV-P1-DX.jpg" },
+  { nome:"Laboratorio Chimico", link:"Palazzina-DSV-P1-DX.jpg" }
+];
+
+const lista = document.getElementById("lista");
+const search = document.getElementById("search");
+const viewer = document.getElementById("viewer");
+const viewerImg = document.getElementById("viewer-img");
+
+/* ===== RENDER ===== */
 function render(filtro = "") {
   lista.innerHTML = "";
   const testo = normalizza(filtro);
 
-  // Campus sempre visibile
+  /* Campus sempre visibile */
   const campus = document.createElement("li");
   campus.textContent = "Mappa del Campus";
   campus.className = "titolo-nc";
   campus.onclick = () => apri("generale.jpg");
   lista.appendChild(campus);
 
-  // Costruiamo struttura per palazzina
-  let sezioneCorrente = null;
+  /* Costruzione struttura sezioni */
   const sezioni = [];
+  let sezioneCorrente = null;
 
   dati.forEach(d => {
     if (d.tipo === "titolo") {
       sezioneCorrente = {
         nome: d.nome,
-        aule: []
+        aule: [],
+        li: null,
+        ul: null
       };
       sezioni.push(sezioneCorrente);
     } else if (!d.tipo && sezioneCorrente) {
@@ -25,7 +233,7 @@ function render(filtro = "") {
     }
   });
 
-  // Render sezioni
+  /* Render sezioni */
   sezioni.forEach(sezione => {
     const auleFiltrate = testo
       ? sezione.aule.filter(a =>
@@ -42,10 +250,12 @@ function render(filtro = "") {
     const ul = document.createElement("ul");
     if (!testo) ul.classList.add("nascosto");
 
-    // ACCORDION UNO ALLA VOLTA (SOLO TRA SEZIONI)
+    sezione.li = liTitolo;
+    sezione.ul = ul;
+
     liTitolo.onclick = () => {
       sezioni.forEach(s => {
-        if (s.ul && s.ul !== ul) {
+        if (s !== sezione) {
           s.ul.classList.add("nascosto");
           s.li.classList.add("chiuso");
         }
@@ -53,10 +263,6 @@ function render(filtro = "") {
       ul.classList.toggle("nascosto");
       liTitolo.classList.toggle("chiuso");
     };
-
-    // memorizziamo riferimenti
-    sezione.ul = ul;
-    sezione.li = liTitolo;
 
     auleFiltrate.forEach(a => {
       const li = document.createElement("li");
@@ -71,3 +277,21 @@ function render(filtro = "") {
     lista.appendChild(ul);
   });
 }
+
+function apri(src) {
+  viewerImg.src = src;
+  viewer.style.display = "flex";
+}
+
+viewer.onclick = () => {
+  viewer.style.display = "none";
+  viewerImg.src = "";
+};
+
+search.oninput = e => render(e.target.value);
+
+render();
+</script>
+
+</body>
+</html>
