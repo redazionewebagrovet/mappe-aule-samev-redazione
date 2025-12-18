@@ -12,11 +12,25 @@
       max-width: 600px;
     }
 
-    h1 {
-      font-size: 1.5em;
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 12px;
     }
 
+    .logo {
+      height: 48px;
+      width: auto;
+    }
+
+    h1 {
+      font-size: 1.5em;
+      margin: 0;
+    }
+
+    /* SEARCH */
     input {
       width: 100%;
       padding: 10px;
@@ -25,6 +39,7 @@
       box-sizing: border-box;
     }
 
+    /* LISTA */
     ul {
       list-style: none;
       padding: 0;
@@ -40,66 +55,137 @@
       text-decoration: none;
       color: #0066cc;
       font-size: 1.05em;
+      cursor: pointer;
     }
 
     a:hover {
       text-decoration: underline;
     }
+
+    /* FULLSCREEN VIEWER */
+    .viewer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .viewer img {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+    }
+
+    .viewer::after {
+      content: "✕";
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    /* MOBILE */
+    @media (max-width: 480px) {
+      .logo {
+        height: 40px;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <h1>Mappe delle aule</h1>
+  <!-- HEADER -->
+  <div class="header">
+    <img
+      src="logo-samev-trasparente.png"
+      alt="Logo SAMEV"
+      class="logo"
+    >
+    <h1>Mappe delle aule</h1>
+  </div>
 
+  <!-- SEARCH -->
   <input
     type="text"
     id="search"
     placeholder="Cerca aula (es. Romisondo)"
   >
 
+  <!-- LISTA -->
   <ul id="lista-aule"></ul>
 
+  <!-- VIEWER FULLSCREEN -->
+  <div class="viewer" id="viewer">
+    <img id="viewer-img" src="" alt="Mappa aula">
+  </div>
+
+  <!-- SCRIPT -->
   <script>
     const aule = [
       {
-        nome: "Aula Romisondo       Piano 1 - palazzina DISAFA",
+        nome: "Aula Romisondo – Piano 1 – Palazzina DISAFA",
         link: "palazzina_DISAFA_P1.jpg"
       },
       {
-        nome: "Laboratorio Chimica       Piano 1 - palazzina DISAFA",
+        nome: "Laboratorio Chimica – Piano 1 – Palazzina DISAFA",
         link: "palazzina_DISAFA_P1.jpg"
       },
       {
-        nome: "Aula Informatica       Piano Terra -  palazzina DISAFA",
+        nome: "Aula Informatica – Piano Terra – Palazzina DISAFA",
         link: "palazzina-DISAFA-PT.jpg"
       },
-{
-        nome: "Aula Zootecnica       Piano 1 - palazzina DISAFA",
+      {
+        nome: "Aula Zootecnica – Piano 1 – Palazzina DISAFA",
         link: "palazzina_DISAFA_P1.jpg"
-      },
+      }
     ];
 
     const lista = document.getElementById("lista-aule");
     const search = document.getElementById("search");
+    const viewer = document.getElementById("viewer");
+    const viewerImg = document.getElementById("viewer-img");
 
     function mostraAule(filtro = "") {
       lista.innerHTML = "";
 
       aule
-        .filter(a => a.nome.toLowerCase().includes(filtro.toLowerCase()))
+        .filter(a =>
+          a.nome.toLowerCase().includes(filtro.toLowerCase())
+        )
         .forEach(a => {
           const li = document.createElement("li");
 
           const link = document.createElement("a");
-          link.href = a.link;          // LINK RELATIVO (GitHub Pages)
           link.textContent = a.nome;
-          link.target = "_blank";      // apre solo l’immagine
-          link.rel = "noopener";
+          link.href = "#";
+
+          link.addEventListener("click", e => {
+            e.preventDefault();
+            apriMappa(a.link);
+          });
 
           li.appendChild(link);
           lista.appendChild(li);
         });
     }
+
+    function apriMappa(src) {
+      viewerImg.src = src;
+      viewer.style.display = "flex";
+    }
+
+    viewer.addEventListener("click", () => {
+      viewer.style.display = "none";
+      viewerImg.src = "";
+    });
 
     search.addEventListener("input", e => {
       mostraAule(e.target.value);
@@ -110,10 +196,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
